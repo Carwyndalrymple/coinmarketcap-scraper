@@ -43,11 +43,48 @@ def requestList(type, view):
         type,
         view))
 
+def requestCurrency(type, currency):
+    """Request a list of all coins or tokens."""
+    assert(type == "tokens" or type == "coins",
+        "Can only request tokens or coins")
+    req = "{0}/currencies/{1}/{2}/".format(
+        baseUrl,
+        currency,
+        type)
+    print("REQ", req)
+    return _request(req)
+
 
 def requestMarketCap(slug):
     """Request market cap data for a given coin slug."""
     return _request("{0}/currencies/{1}/".format(
         graphBaseUrl, slug))
+
+def parseCurrency(html):
+    """Parse the information returned by requestList for view 'all'."""
+
+    data = []
+
+    docRoot = lxml.html.fromstring(html)
+
+    rows = docRoot.cssselect("table > tbody > tr")
+
+    for row in rows:
+        datum = {}
+
+        fields = row.cssselect("td")
+
+        datum['date'] = fields[0].text
+        datum['open'] = float(fields[1].text)
+        datum['high'] = float(fields[2].text)
+        datum['low'] = float(fields[3].text)
+        datum['close'] = float(fields[4].text)
+        datum['volume'] = int(''.join(fields[5].text.split(',')))
+        datum['market_cap'] = int(''.join(fields[6].text.split(',')))
+
+        data.append(datum)
+
+    return data
 
 
 def parseList(html, type):
